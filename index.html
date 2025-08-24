@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCQ Quiz with Timer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background: #f5f5f5;
+    }
+    .quiz-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-bottom: 15px;
+    }
+    .options {
+      margin: 10px 0;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 15px;
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    #result {
+      font-size: 18px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    #timer {
+      font-size: 18px;
+      font-weight: bold;
+      color: red;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="quiz-container">
+    <div id="timer">Time Left: 60:00</div>
+    <h2 id="question">Question text</h2>
+    <div class="options">
+      <label><input type="radio" name="option" value="0"> <span id="opt0"></span></label><br>
+      <label><input type="radio" name="option" value="1"> <span id="opt1"></span></label><br>
+      <label><input type="radio" name="option" value="2"> <span id="opt2"></span></label><br>
+      <label><input type="radio" name="option" value="3"> <span id="opt3"></span></label>
+    </div>
+    <button onclick="nextQuestion()">Next</button>
+    <p id="feedback"></p>
+    <p id="result"></p>
+  </div>
+
+  <script>
+    const quizData = [
+       {
+    question: "Who is known as the father of Botany?",
+    options: ["Aristotle", "Theophrastus", "Linnaeus", "Darwin"],
+    answer: 1
+  },
+  {
+    question: "Which pigment is responsible for photosynthesis?",
+    options: ["Chlorophyll", "Xanthophyll", "Carotene", "Anthocyanin"],
+    answer: 0
+  },
+  {
+    question: "In which part of the plant does photosynthesis mainly occur?",
+    options: ["Root", "Stem", "Leaf", "Flower"],
+    answer: 2
+  },
+  {
+    question: "Which tissue transports water in plants?",
+    options: ["Phloem", "Xylem", "Cambium", "Cortex"],
+    answer: 1
+  },
+  {
+    question: "The term 'Angiosperm' refers to plants that:",
+    options: ["Have naked seeds", "Produce spores", "Have flowers and fruits", "Lack vascular tissues"],
+    answer: 2
+  },
+  {
+    question: "Which plant hormone is responsible for cell elongation?",
+    options: ["Auxin", "Cytokinin", "Gibberellin", "Ethylene"],
+    answer: 0
+  },
+  {
+    question: "Which of the following is a non-vascular plant?",
+    options: ["Fern", "Moss", "Pine", "Mango"],
+    answer: 1
+  },
+  {
+    question: "Stomata are mainly responsible for:",
+    options: ["Absorption of water", "Transpiration and gas exchange", "Transport of food", "Anchorage"],
+    answer: 1
+  },
+  {
+    question: "Double fertilization is a characteristic feature of:",
+    options: ["Gymnosperms", "Bryophytes", "Angiosperms", "Pteridophytes"],
+    answer: 2
+  },
+  {
+    question: "Which part of the plant is modified into a tuber in potato?",
+    options: ["Root", "Stem", "Leaf", "Flower"],
+    answer: 1
+  },
+  {
+    question: "Which plant is known as 'living fossil'?",
+    options: ["Cycas", "Pinus", "Ginkgo biloba", "Selaginella"],
+    answer: 2
+  },
+  {
+    question: "Which element is essential for chlorophyll synthesis?",
+    options: ["Nitrogen", "Magnesium", "Iron", "Calcium"],
+    answer: 1
+  },
+  {
+    question: "What type of root system is found in monocots?",
+    options: ["Tap root", "Fibrous root", "Adventitious root", "Prop root"],
+    answer: 1
+  },
+  {
+    question: "Casparian strips are present in:",
+    options: ["Cortex", "Endodermis", "Pericycle", "Xylem"],
+    answer: 1
+  },
+  {
+    question: "Which plant hormone is also known as 'stress hormone'?",
+    options: ["Auxin", "ABA", "Cytokinin", "Ethylene"],
+    answer: 1
+  },
+  {
+    question: "The outermost layer of the root is called:",
+    options: ["Cortex", "Epidermis", "Endodermis", "Pericycle"],
+    answer: 1
+  },
+  {
+    question: "Which part of the ovule develops into seed coat?",
+    options: ["Nucellus", "Integument", "Funiculus", "Micropyle"],
+    answer: 1
+  },
+  {
+    question: "Which vascular bundle is present in monocot stem?",
+    options: ["Open and scattered", "Closed and scattered", "Open and radial", "Closed and collateral"],
+    answer: 1
+  },
+  {
+    question: "Which of the following is an example of C4 plant?",
+    options: ["Wheat", "Rice", "Maize", "Barley"],
+    answer: 2
+  },
+  {
+    question: "Which process occurs in mitochondria of plant cells?",
+    options: ["Photosynthesis", "Respiration", "Transpiration", "Osmosis"],
+    answer: 1
+  },
+  {
+    question: "The apical meristem is responsible for:",
+    options: ["Primary growth", "Secondary growth", "Flowering", "Fruit formation"],
+    answer: 0
+  },
+  {
+    question: "The food conducting tissue in plants is:",
+    options: ["Phloem", "Xylem", "Cortex", "Pith"],
+    answer: 0
+  },
+  {
+    question: "In Bryophytes, the dominant phase is:",
+    options: ["Sporophyte", "Gametophyte", "Zygote", "Embryo"],
+    answer: 1
+  },
+  {
+    question: "In ferns, the heart-shaped gametophyte is called:",
+    options: ["Archegonium", "Prothallus", "Sporophyll", "Sorus"],
+    answer: 1
+  },
+  {
+    question: "Gymnosperms are also called:",
+    options: ["Non-flowering plants", "Flowering plants", "Seedless plants", "Spore-bearing plants"],
+    answer: 0
+  },
+  {
+    question: "Lenticels are involved in:",
+    options: ["Respiration", "Photosynthesis", "Excretion", "Absorption"],
+    answer: 0
+  },
+  {
+    question: "The main photosynthetic tissue in plants is:",
+    options: ["Collenchyma", "Parenchyma", "Chlorenchyma", "Sclerenchyma"],
+    answer: 2
+  },
+  {
+    question: "Which of the following is an example of a xerophyte?",
+    options: ["Lotus", "Cactus", "Mango", "Rice"],
+    answer: 1
+  },
+  {
+    question: "Plants that grow in saline soil are called:",
+    options: ["Hydrophytes", "Halophytes", "Epiphytes", "Xerophytes"],
+    answer: 1
+  },
+  {
+    question: "Which plant tissue provides mechanical support?",
+    options: ["Parenchyma", "Collenchyma", "Phloem", "Xylem"],
+    answer: 1
+  },
+  {
+    question: "Which part of plant absorbs most water?",
+    options: ["Root hair", "Root tip", "Cortex", "Xylem"],
+    answer: 0
+  },
+  {
+    question: "Which of the following is not a plant hormone?",
+    options: ["Auxin", "Cytokinin", "Chlorophyll", "Gibberellin"],
+    answer: 2
+  },
+  {
+    question: "Vessels are absent in:",
+    options: ["Angiosperms", "Gymnosperms", "Ferns", "Mosses"],
+    answer: 1
+  },
+  {
+    question: "Pollination by wind is called:",
+    options: ["Entomophily", "Hydrophily", "Anemophily", "Ornithophily"],
+    answer: 2
+  },
+  {
+    question: "Which plant movement is growth independent?",
+    options: ["Tropism", "Nastic movement", "Phototropism", "Geotropism"],
+    answer: 1
+  },
+  {
+    question: "The process of loss of water in liquid form is called:",
+    options: ["Guttation", "Transpiration", "Exudation", "Condensation"],
+    answer: 0
+  },
+  {
+    question: "Which gas is released during photosynthesis?",
+    options: ["Carbon dioxide", "Oxygen", "Nitrogen", "Hydrogen"],
+    answer: 1
+  },
+  {
+    question: "Which stage of photosynthesis produces glucose?",
+    options: ["Light reaction", "Dark reaction", "Photolysis", "Photorespiration"],
+    answer: 1
+  },
+  {
+    question: "Which enzyme fixes carbon dioxide in C3 cycle?",
+    options: ["Rubisco", "PEP carboxylase", "ATP synthase", "Nitrate reductase"],
+    answer: 0
+  },
+  {
+    question: "The powerhouse of plant cell is:",
+    options: ["Chloroplast", "Mitochondria", "Nucleus", "Golgi body"],
+    answer: 1
+  },
+  {
+    question: "Cell wall of plants is mainly made of:",
+    options: ["Protein", "Cellulose", "Lipid", "Starch"],
+    answer: 1
+  },
+  {
+    question: "Which plant reproduces by spores?",
+    options: ["Fern", "Mango", "Pine", "Rose"],
+    answer: 0
+  },
+  {
+    question: "Which structure protects the root tip?",
+    options: ["Root hair", "Root cap", "Pericycle", "Endodermis"],
+    answer: 1
+  },
+  {
+    question: "The opening of stomata is controlled by:",
+    options: ["Guard cells", "Mesophyll cells", "Trichomes", "Root hairs"],
+    answer: 0
+  },
+  {
+    question: "The seedless vascular plants are:",
+    options: ["Bryophytes", "Gymnosperms", "Pteridophytes", "Angiosperms"],
+    answer: 2
+  },
+  {
+    question: "Which pigment gives red color to plants?",
+    options: ["Chlorophyll", "Xanthophyll", "Anthocyanin", "Carotene"],
+    answer: 2
+  },
+  {
+    question: "Which is the longest cell in plants?",
+    options: ["Parenchyma", "Tracheid", "Sieve tube", "Fibres"],
+    answer: 3
+  },
+  {
+    question: "Mango fruit develops from:",
+    options: ["Ovary", "Ovule", "Integument", "Thalamus"],
+    answer: 0
+  },
+  {
+    question: "Which part of plant is an organ of photosynthesis?",
+    options: ["Leaf", "Root", "Stem", "Flower"],
+    answer: 0
+  },
+  {
+    question: "The main product of photosynthesis is:",
+    options: ["Glucose", "Starch", "ATP", "CO2"],
+    answer: 0
+  },
+  {
+    question: "Which tissue forms annual rings in trees?",
+    options: ["Phloem", "Xylem", "Cambium", "Pith"],
+    answer: 2
+  },
+  
+  {
+    question: "Which tissue is responsible for secondary growth in plants?",
+    options: ["Xylem", "Phloem", "Cambium", "Epidermis"],
+    answer: 2
+  },
+  {
+    question: "Which of the following is a non-flowering plant?",
+    options: ["Mango", "Fern", "Wheat", "Mustard"],
+    answer: 1
+  },
+  {
+    question: "Which structure in flowers produces pollen grains?",
+    options: ["Stigma", "Anther", "Ovary", "Style"],
+    answer: 1
+  },
+  {
+    question: "Which type of fertilization occurs in angiosperms?",
+    options: ["Single", "Double", "Triple", "None"],
+    answer: 1
+  },
+  {
+    question: "The process of fusion of male and female gametes is called:",
+    options: ["Pollination", "Fertilization", "Germination", "Propagation"],
+    answer: 1
+  },
+  {
+    question: "The mature ovary forms:",
+    options: ["Seed", "Fruit", "Embryo", "Endosperm"],
+    answer: 1
+  },
+  {
+    question: "Which of the following plants shows nitrogen fixation?",
+    options: ["Maize", "Pea", "Rice", "Wheat"],
+    answer: 1
+  },
+  {
+    question: "Which of the following is a stem modification?",
+    options: ["Carrot", "Potato", "Turnip", "Radish"],
+    answer: 1
+  },
+  {
+    question: "Which of the following is a root modification?",
+    options: ["Ginger", "Onion", "Sweet potato", "Potato"],
+    answer: 2
+  },
+  {
+    question: "In dicot roots, xylem and phloem are:",
+    options: ["Scattered", "Radial", "Conjoint", "Collateral"],
+    answer: 1
+  },
+  {
+    question: "Transpiration occurs through:",
+    options: ["Stomata", "Lenticels", "Cuticle", "All of the above"],
+    answer: 3
+  },
+  {
+    question: "The first stable product of C4 cycle is:",
+    options: ["PGA", "OAA", "RuBP", "NADPH"],
+    answer: 1
+  },
+  {
+    question: "Which element is essential for nitrogen fixation?",
+    options: ["Boron", "Molybdenum", "Calcium", "Potassium"],
+    answer: 1
+  },
+  {
+    question: "The mode of nutrition in green plants is:",
+    options: ["Heterotrophic", "Saprophytic", "Autotrophic", "Parasitic"],
+    answer: 2
+  },
+  {
+    question: "Which process converts light energy into chemical energy?",
+    options: ["Respiration", "Photosynthesis", "Transpiration", "Fermentation"],
+    answer: 1
+  },
+  {
+    question: "In which cell organelle does photosynthesis occur?",
+    options: ["Mitochondria", "Chloroplast", "Ribosome", "Nucleus"],
+    answer: 1
+  },
+  {
+    question: "The first step of photosynthesis is:",
+    options: ["Photolysis of water", "CO2 fixation", "Glucose synthesis", "ATP formation"],
+    answer: 0
+  },
+  {
+    question: "The C3 cycle is also called:",
+    options: ["Calvin cycle", "Krebs cycle", "Hatch-Slack pathway", "Glycolysis"],
+    answer: 0
+  },
+  {
+    question: "The largest flower in the world is:",
+    options: ["Rafflesia", "Lotus", "Sunflower", "Hibiscus"],
+    answer: 0
+  },
+  {
+    question: "The largest seed in the world is:",
+    options: ["Coconut", "Lodoicea", "Mango", "Pea"],
+    answer: 1
+  },
+  {
+    question: "Which type of pollination is seen in maize?",
+    options: ["Entomophily", "Anemophily", "Hydrophily", "Ornithophily"],
+    answer: 1
+  },
+  {
+    question: "Which is an example of insectivorous plant?",
+    options: ["Cactus", "Mango", "Nepenthes", "Rice"],
+    answer: 2
+  },
+  {
+    question: "The functional unit of chloroplast is:",
+    options: ["Cristae", "Granum", "Thylakoid", "Stroma"],
+    answer: 2
+  },
+  {
+    question: "In glycolysis, glucose is converted into:",
+    options: ["Pyruvate", "Acetyl-CoA", "Lactic acid", "Alcohol"],
+    answer: 0
+  },
+  {
+    question: "Which gas is essential for photosynthesis?",
+    options: ["Oxygen", "Carbon dioxide", "Nitrogen", "Hydrogen"],
+    answer: 1
+  },
+  {
+    question: "Which process forms ATP in plants?",
+    options: ["Respiration", "Photosynthesis", "Both respiration and photosynthesis", "Fermentation"],
+    answer: 2
+  },
+  {
+    question: "The edible part of apple is:",
+    options: ["Ovary", "Thalamus", "Seed", "Pericarp"],
+    answer: 1
+  },
+  {
+    question: "The edible part of banana is:",
+    options: ["Pericarp", "Mesocarp", "Endosperm", "Fruit wall"],
+    answer: 0
+  },
+  {
+    question: "The perisperm is found in:",
+    options: ["Maize", "Castor", "Black pepper", "Wheat"],
+    answer: 2
+  },
+  {
+    question: "Which of the following is an example of endospermic seed?",
+    options: ["Pea", "Bean", "Maize", "Gram"],
+    answer: 2
+  },
+  {
+    question: "Which is an example of non-endospermic seed?",
+    options: ["Maize", "Castor", "Pea", "Coconut"],
+    answer: 2
+  },
+  {
+    question: "Which type of germination occurs in pea?",
+    options: ["Epigeal", "Hypogeal", "Vivipary", "Asexual"],
+    answer: 1
+  },
+  {
+    question: "Which type of germination occurs in bean?",
+    options: ["Epigeal", "Hypogeal", "Vivipary", "Clonal"],
+    answer: 0
+  },
+  {
+    question: "Which plant tissue is dead at maturity?",
+    options: ["Parenchyma", "Collenchyma", "Sclerenchyma", "Phloem"],
+    answer: 2
+  },
+  {
+    question: "The universal solvent in plants is:",
+    options: ["Alcohol", "Water", "Oil", "Glucose"],
+    answer: 1
+  },
+  {
+    question: "The middle lamella is rich in:",
+    options: ["Cellulose", "Lignin", "Pectin", "Protein"],
+    answer: 2
+  },
+  {
+    question: "Which plastid stores starch?",
+    options: ["Chloroplast", "Chromoplast", "Amyloplast", "Elaioplast"],
+    answer: 2
+  },
+  {
+    question: "Which plastid stores oil?",
+    options: ["Chloroplast", "Elaioplast", "Amyloplast", "Chromoplast"],
+    answer: 1
+  },
+  {
+    question: "Which plastid imparts color to fruits?",
+    options: ["Chloroplast", "Chromoplast", "Amyloplast", "Elaioplast"],
+    answer: 1
+  },
+  {
+    question: "Which bond is broken in photolysis of water?",
+    options: ["Hydrogen bond", "Covalent bond", "Peptide bond", "Ionic bond"],
+    answer: 1
+  },
+  {
+    question: "In which phase of mitosis do chromosomes align at equator?",
+    options: ["Prophase", "Metaphase", "Anaphase", "Telophase"],
+    answer: 1
+  },
+  {
+    question: "In meiosis, crossing over occurs in:",
+    options: ["Prophase I", "Metaphase I", "Anaphase I", "Telophase I"],
+    answer: 0
+  },
+  {
+    question: "The study of pollen grains is called:",
+    options: ["Palynology", "Mycology", "Bryology", "Cytology"],
+    answer: 0
+  },
+  {
+    question: "The swollen base of the pistil is called:",
+    options: ["Stigma", "Style", "Ovary", "Ovule"],
+    answer: 2
+  },
+  {
+    question: "Ovules are attached to ovary wall by:",
+    options: ["Funiculus", "Nucellus", "Integument", "Embryo sac"],
+    answer: 0
+  },
+  {
+    question: "Embryo sac in angiosperms is:",
+    options: ["1-celled", "4-celled", "7-celled, 8-nucleate", "8-celled, 7-nucleate"],
+    answer: 2
+  },
+  {
+    question: "The male gametophyte in angiosperms is:",
+    options: ["Anther", "Pollen grain", "Sperm", "Ovule"],
+    answer: 1
+  },
+  {
+    question: "The female gametophyte in angiosperms is:",
+    options: ["Embryo sac", "Ovule", "Ovary", "Stigma"],
+    answer: 0
+  },
+  {
+    question: "In which group of plants is archegonium found?",
+    options: ["Bryophytes and Pteridophytes", "Gymnosperms", "Both A and B", "Angiosperms"],
+    answer: 2
+  },
+  {
+    question: "The reserve food in monocot seeds is stored in:",
+    options: ["Endosperm", "Cotyledon", "Scutellum", "Aleurone layer"],
+    answer: 0
+  },
+  {
+    question: "The study of algae is called:",
+    options: ["Mycology", "Phycology", "Bryology", "Pteridology"],
+    answer: 1
+  },
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let wrong = 0;
+    let quizEnded = false;
+
+    // load a question
+    function loadQuestion() {
+      const q = quizData[currentQuestion];
+      document.getElementById("question").innerText = q.question;
+      q.options.forEach((opt, index) => {
+        document.getElementById("opt" + index).innerText = opt;
+      });
+      document.querySelectorAll('input[name="option"]').forEach(r => {
+        r.checked = false;
+        r.disabled = false; // enable for new question
+      });
+      document.getElementById("feedback").innerText = "";
+    }
+
+    // move to next
+    function nextQuestion() {
+      if (quizEnded) return;
+
+      const selected = document.querySelector('input[name="option"]:checked');
+      if (selected) {
+        const ans = parseInt(selected.value);
+        const correct = quizData[currentQuestion].answer;
+        if (ans === correct) {
+          score++;
+          document.getElementById("feedback").innerText = "✅ Correct!";
+        } else {
+          wrong++;
+          document.getElementById("feedback").innerText =
+            `❌ Wrong! Correct answer: ${quizData[currentQuestion].options[correct]}`;
+        }
+
+        // disable options after answering
+        document.querySelectorAll('input[name="option"]').forEach(r => r.disabled = true);
+
+        setTimeout(() => {
+          currentQuestion++;
+          if (currentQuestion < quizData.length) {
+            loadQuestion();
+          } else {
+            endQuiz();
+          }
+        }, 1000); // wait 1 second to show feedback
+      } else {
+        alert("Please select an option before proceeding.");
+      }
+    }
+
+    // end quiz function
+    function endQuiz() {
+      quizEnded = true;
+      let finalScore = score - (wrong * 0.25);
+      if (finalScore < 0) finalScore = 0;
+
+      document.querySelector(".quiz-container").innerHTML =
+        `<h2>⏰ Quiz Completed!</h2>
+         <p>✅ Correct: ${score}</p>
+         <p>❌ Wrong: ${wrong}</p>
+         <p><b>Total Marks: ${finalScore.toFixed(2)} / ${quizData.length}</b></p>`;
+    }
+
+    // Timer (1 hour = 3600s)
+    let timeLeft = 3600;
+    const timerDisplay = document.getElementById("timer");
+
+    function startTimer() {
+      const timerInterval = setInterval(() => {
+        if (timeLeft <= 0 || quizEnded) {
+          clearInterval(timerInterval);
+          endQuiz();
+        } else {
+          timeLeft--;
+          const minutes = Math.floor(timeLeft / 60);
+          const seconds = timeLeft % 60;
+          timerDisplay.innerText = 
+            `Time Left: ${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+        }
+      }, 1000);
+    }
+
+    // init
+    loadQuestion();
+    startTimer();
+  </script>
+
+</body>
+</html>
