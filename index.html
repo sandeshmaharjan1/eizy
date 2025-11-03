@@ -1,673 +1,270 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MCQ Quiz with Timer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Today's To‑Do with Timers</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 30px;
-      background: #f5f5f5;
+    :root{
+      --bg:#0f1724; --card:#111827; --accent:#06b6d4; --muted:#94a3b8; --glass: rgba(255,255,255,0.03);
+      --success:#10b981; --danger:#ef4444; --radius:12px; --gap:14px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
-    .quiz-container {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 600px;
-      margin: auto;
-      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#031224 0%, #071124 100%);color:#e6eef6}
+    .wrap{max-width:980px;margin:28px auto;padding:20px}
+
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:20px;margin-top:20px}
+
+    /* left column - tasks */
+    .panel{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
+    .task-list{display:flex;flex-direction:column;gap:12px}
+    .task{display:flex;gap:12px;align-items:center;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border:1px solid rgba(255,255,255,0.02)}
+    .task .meta{flex:1}
+    .task h3{margin:0;font-size:15px}
+    .task p{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .controls{display:flex;gap:8px;align-items:center}
+    button{background:var(--glass);border:1px solid rgba(255,255,255,0.04);color:inherit;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px}
+    button.primary{background:linear-gradient(90deg,var(--accent),#7dd3fc);color:#022; border:none}
+    button.ghost{background:transparent;border:1px dashed rgba(255,255,255,0.04)}
+    .time{min-width:88px;text-align:center;font-weight:600}
+
+    /* right column - presets + add */
+    .sidebar h4{margin:0 0 10px 0}
+    .presets{display:flex;gap:8px;flex-wrap:wrap}
+    .preset{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.02);cursor:pointer}
+
+    form.add{display:flex;flex-direction:column;gap:8px}
+    input,select{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:8px;color:inherit}
+
+    .footer{margin-top:18px;display:flex;gap:10px;align-items:center;justify-content:space-between;color:var(--muted);font-size:13px}
+
+    /* small screens */
+    @media (max-width:860px){
+      .grid{grid-template-columns:1fr;}
+      .sidebar{order:2}
     }
-    h2 {
-      margin-bottom: 15px;
-    }
-    .options {
-      margin: 10px 0;
-    }
-    button {
-      margin-top: 15px;
-      padding: 10px 15px;
-      background: #4caf50;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #45a049;
-    }
-    #result {
-      font-size: 18px;
-      margin-top: 20px;
-      font-weight: bold;
-    }
-    #timer {
-      font-size: 18px;
-      font-weight: bold;
-      color: red;
-      text-align: right;
-    }
+
+    /* little status badges */
+    .badge{font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted)}
+
+    /* nice focus */
+    button:focus,input:focus,select:focus{outline:2px solid rgba(6,182,212,0.12);outline-offset:2px}
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Today's To‑Do & Timers</h1>
+        <p class="lead">A focused list for today — quick start timers, pause/resume and save to your browser.</p>
+      </div>
+      <div style="text-align:right">
+        <div class="badge" id="dateBadge"></div>
+      </div>
+    </header>
 
-  <div class="quiz-container">
-    <div id="timer">Time Left: 60:00</div>
-    <h2 id="question">Question text</h2>
-    <div class="options">
-      <label><input type="radio" name="option" value="0"> <span id="opt0"></span></label><br>
-      <label><input type="radio" name="option" value="1"> <span id="opt1"></span></label><br>
-      <label><input type="radio" name="option" value="2"> <span id="opt2"></span></label><br>
-      <label><input type="radio" name="option" value="3"> <span id="opt3"></span></label>
+    <div class="grid">
+      <section class="panel">
+        <h4 style="margin:0 0 10px 0">Tasks</h4>
+        <div class="task-list" id="tasks">
+          <!-- tasks populated by JS -->
+        </div>
+
+        <div class="footer">
+          <div>Session total: <span id="sessionTotal">00:00:00</span></div>
+          <div>
+            <button id="clearAll" class="ghost">Clear completed</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel sidebar">
+        <h4>Quick presets</h4>
+        <div class="presets">
+          <div class="preset" data-min="25">25 min</div>
+          <div class="preset" data-min="50">50 min</div>
+          <div class="preset" data-min="15">15 min</div>
+          <div class="preset" data-min="5">5 min</div>
+        </div>
+
+        <hr style="opacity:.06;margin:12px 0;border:none;height:1px;background:rgba(255,255,255,0.03)">
+
+        <h4>Add / edit task</h4>
+        <form id="addForm" class="add" onsubmit="return false;">
+          <input id="taskTitle" placeholder="Task title (required)" required />
+          <input id="taskNote" placeholder="Optional note (e.g. chapters/sections)" />
+          <div style="display:flex;gap:8px">
+            <input id="taskMinutes" type="number" placeholder="minutes" min="1" style="flex:1" />
+            <select id="taskPriority" style="width:120px">
+              <option value="normal">Normal</option>
+              <option value="high">High priority</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="addBtn" class="primary">Add task</button>
+            <button id="addStartBtn" class="ghost">Add + Start</button>
+          </div>
+        </form>
+
+        <div style="height:8px"></div>
+        <div style="color:var(--muted);font-size:13px">Tips: Click a preset to fill minutes. Tasks persist locally in this browser.</div>
+      </aside>
     </div>
-    <button onclick="nextQuestion()">Next</button>
-    <p id="feedback"></p>
-    <p id="result"></p>
   </div>
 
   <script>
-    const quizData = [
-       {
-    question: "Who is known as the father of Botany?",
-    options: ["Aristotle", "Theophrastus", "Linnaeus", "Darwin"],
-    answer: 1
-  },
-  {
-    question: "Which pigment is responsible for photosynthesis?",
-    options: ["Chlorophyll", "Xanthophyll", "Carotene", "Anthocyanin"],
-    answer: 0
-  },
-  {
-    question: "In which part of the plant does photosynthesis mainly occur?",
-    options: ["Root", "Stem", "Leaf", "Flower"],
-    answer: 2
-  },
-  {
-    question: "Which tissue transports water in plants?",
-    options: ["Phloem", "Xylem", "Cambium", "Cortex"],
-    answer: 1
-  },
-  {
-    question: "The term 'Angiosperm' refers to plants that:",
-    options: ["Have naked seeds", "Produce spores", "Have flowers and fruits", "Lack vascular tissues"],
-    answer: 2
-  },
-  {
-    question: "Which plant hormone is responsible for cell elongation?",
-    options: ["Auxin", "Cytokinin", "Gibberellin", "Ethylene"],
-    answer: 0
-  },
-  {
-    question: "Which of the following is a non-vascular plant?",
-    options: ["Fern", "Moss", "Pine", "Mango"],
-    answer: 1
-  },
-  {
-    question: "Stomata are mainly responsible for:",
-    options: ["Absorption of water", "Transpiration and gas exchange", "Transport of food", "Anchorage"],
-    answer: 1
-  },
-  {
-    question: "Double fertilization is a characteristic feature of:",
-    options: ["Gymnosperms", "Bryophytes", "Angiosperms", "Pteridophytes"],
-    answer: 2
-  },
-  {
-    question: "Which part of the plant is modified into a tuber in potato?",
-    options: ["Root", "Stem", "Leaf", "Flower"],
-    answer: 1
-  },
-  {
-    question: "Which plant is known as 'living fossil'?",
-    options: ["Cycas", "Pinus", "Ginkgo biloba", "Selaginella"],
-    answer: 2
-  },
-  {
-    question: "Which element is essential for chlorophyll synthesis?",
-    options: ["Nitrogen", "Magnesium", "Iron", "Calcium"],
-    answer: 1
-  },
-  {
-    question: "What type of root system is found in monocots?",
-    options: ["Tap root", "Fibrous root", "Adventitious root", "Prop root"],
-    answer: 1
-  },
-  {
-    question: "Casparian strips are present in:",
-    options: ["Cortex", "Endodermis", "Pericycle", "Xylem"],
-    answer: 1
-  },
-  {
-    question: "Which plant hormone is also known as 'stress hormone'?",
-    options: ["Auxin", "ABA", "Cytokinin", "Ethylene"],
-    answer: 1
-  },
-  {
-    question: "The outermost layer of the root is called:",
-    options: ["Cortex", "Epidermis", "Endodermis", "Pericycle"],
-    answer: 1
-  },
-  {
-    question: "Which part of the ovule develops into seed coat?",
-    options: ["Nucellus", "Integument", "Funiculus", "Micropyle"],
-    answer: 1
-  },
-  {
-    question: "Which vascular bundle is present in monocot stem?",
-    options: ["Open and scattered", "Closed and scattered", "Open and radial", "Closed and collateral"],
-    answer: 1
-  },
-  {
-    question: "Which of the following is an example of C4 plant?",
-    options: ["Wheat", "Rice", "Maize", "Barley"],
-    answer: 2
-  },
-  {
-    question: "Which process occurs in mitochondria of plant cells?",
-    options: ["Photosynthesis", "Respiration", "Transpiration", "Osmosis"],
-    answer: 1
-  },
-  {
-    question: "The apical meristem is responsible for:",
-    options: ["Primary growth", "Secondary growth", "Flowering", "Fruit formation"],
-    answer: 0
-  },
-  {
-    question: "The food conducting tissue in plants is:",
-    options: ["Phloem", "Xylem", "Cortex", "Pith"],
-    answer: 0
-  },
-  {
-    question: "In Bryophytes, the dominant phase is:",
-    options: ["Sporophyte", "Gametophyte", "Zygote", "Embryo"],
-    answer: 1
-  },
-  {
-    question: "In ferns, the heart-shaped gametophyte is called:",
-    options: ["Archegonium", "Prothallus", "Sporophyll", "Sorus"],
-    answer: 1
-  },
-  {
-    question: "Gymnosperms are also called:",
-    options: ["Non-flowering plants", "Flowering plants", "Seedless plants", "Spore-bearing plants"],
-    answer: 0
-  },
-  {
-    question: "Lenticels are involved in:",
-    options: ["Respiration", "Photosynthesis", "Excretion", "Absorption"],
-    answer: 0
-  },
-  {
-    question: "The main photosynthetic tissue in plants is:",
-    options: ["Collenchyma", "Parenchyma", "Chlorenchyma", "Sclerenchyma"],
-    answer: 2
-  },
-  {
-    question: "Which of the following is an example of a xerophyte?",
-    options: ["Lotus", "Cactus", "Mango", "Rice"],
-    answer: 1
-  },
-  {
-    question: "Plants that grow in saline soil are called:",
-    options: ["Hydrophytes", "Halophytes", "Epiphytes", "Xerophytes"],
-    answer: 1
-  },
-  {
-    question: "Which plant tissue provides mechanical support?",
-    options: ["Parenchyma", "Collenchyma", "Phloem", "Xylem"],
-    answer: 1
-  },
-  {
-    question: "Which part of plant absorbs most water?",
-    options: ["Root hair", "Root tip", "Cortex", "Xylem"],
-    answer: 0
-  },
-  {
-    question: "Which of the following is not a plant hormone?",
-    options: ["Auxin", "Cytokinin", "Chlorophyll", "Gibberellin"],
-    answer: 2
-  },
-  {
-    question: "Vessels are absent in:",
-    options: ["Angiosperms", "Gymnosperms", "Ferns", "Mosses"],
-    answer: 1
-  },
-  {
-    question: "Pollination by wind is called:",
-    options: ["Entomophily", "Hydrophily", "Anemophily", "Ornithophily"],
-    answer: 2
-  },
-  {
-    question: "Which plant movement is growth independent?",
-    options: ["Tropism", "Nastic movement", "Phototropism", "Geotropism"],
-    answer: 1
-  },
-  {
-    question: "The process of loss of water in liquid form is called:",
-    options: ["Guttation", "Transpiration", "Exudation", "Condensation"],
-    answer: 0
-  },
-  {
-    question: "Which gas is released during photosynthesis?",
-    options: ["Carbon dioxide", "Oxygen", "Nitrogen", "Hydrogen"],
-    answer: 1
-  },
-  {
-    question: "Which stage of photosynthesis produces glucose?",
-    options: ["Light reaction", "Dark reaction", "Photolysis", "Photorespiration"],
-    answer: 1
-  },
-  {
-    question: "Which enzyme fixes carbon dioxide in C3 cycle?",
-    options: ["Rubisco", "PEP carboxylase", "ATP synthase", "Nitrate reductase"],
-    answer: 0
-  },
-  {
-    question: "The powerhouse of plant cell is:",
-    options: ["Chloroplast", "Mitochondria", "Nucleus", "Golgi body"],
-    answer: 1
-  },
-  {
-    question: "Cell wall of plants is mainly made of:",
-    options: ["Protein", "Cellulose", "Lipid", "Starch"],
-    answer: 1
-  },
-  {
-    question: "Which plant reproduces by spores?",
-    options: ["Fern", "Mango", "Pine", "Rose"],
-    answer: 0
-  },
-  {
-    question: "Which structure protects the root tip?",
-    options: ["Root hair", "Root cap", "Pericycle", "Endodermis"],
-    answer: 1
-  },
-  {
-    question: "The opening of stomata is controlled by:",
-    options: ["Guard cells", "Mesophyll cells", "Trichomes", "Root hairs"],
-    answer: 0
-  },
-  {
-    question: "The seedless vascular plants are:",
-    options: ["Bryophytes", "Gymnosperms", "Pteridophytes", "Angiosperms"],
-    answer: 2
-  },
-  {
-    question: "Which pigment gives red color to plants?",
-    options: ["Chlorophyll", "Xanthophyll", "Anthocyanin", "Carotene"],
-    answer: 2
-  },
-  {
-    question: "Which is the longest cell in plants?",
-    options: ["Parenchyma", "Tracheid", "Sieve tube", "Fibres"],
-    answer: 3
-  },
-  {
-    question: "Mango fruit develops from:",
-    options: ["Ovary", "Ovule", "Integument", "Thalamus"],
-    answer: 0
-  },
-  {
-    question: "Which part of plant is an organ of photosynthesis?",
-    options: ["Leaf", "Root", "Stem", "Flower"],
-    answer: 0
-  },
-  {
-    question: "The main product of photosynthesis is:",
-    options: ["Glucose", "Starch", "ATP", "CO2"],
-    answer: 0
-  },
-  {
-    question: "Which tissue forms annual rings in trees?",
-    options: ["Phloem", "Xylem", "Cambium", "Pith"],
-    answer: 2
-  },
-  
-  {
-    question: "Which tissue is responsible for secondary growth in plants?",
-    options: ["Xylem", "Phloem", "Cambium", "Epidermis"],
-    answer: 2
-  },
-  {
-    question: "Which of the following is a non-flowering plant?",
-    options: ["Mango", "Fern", "Wheat", "Mustard"],
-    answer: 1
-  },
-  {
-    question: "Which structure in flowers produces pollen grains?",
-    options: ["Stigma", "Anther", "Ovary", "Style"],
-    answer: 1
-  },
-  {
-    question: "Which type of fertilization occurs in angiosperms?",
-    options: ["Single", "Double", "Triple", "None"],
-    answer: 1
-  },
-  {
-    question: "The process of fusion of male and female gametes is called:",
-    options: ["Pollination", "Fertilization", "Germination", "Propagation"],
-    answer: 1
-  },
-  {
-    question: "The mature ovary forms:",
-    options: ["Seed", "Fruit", "Embryo", "Endosperm"],
-    answer: 1
-  },
-  {
-    question: "Which of the following plants shows nitrogen fixation?",
-    options: ["Maize", "Pea", "Rice", "Wheat"],
-    answer: 1
-  },
-  {
-    question: "Which of the following is a stem modification?",
-    options: ["Carrot", "Potato", "Turnip", "Radish"],
-    answer: 1
-  },
-  {
-    question: "Which of the following is a root modification?",
-    options: ["Ginger", "Onion", "Sweet potato", "Potato"],
-    answer: 2
-  },
-  {
-    question: "In dicot roots, xylem and phloem are:",
-    options: ["Scattered", "Radial", "Conjoint", "Collateral"],
-    answer: 1
-  },
-  {
-    question: "Transpiration occurs through:",
-    options: ["Stomata", "Lenticels", "Cuticle", "All of the above"],
-    answer: 3
-  },
-  {
-    question: "The first stable product of C4 cycle is:",
-    options: ["PGA", "OAA", "RuBP", "NADPH"],
-    answer: 1
-  },
-  {
-    question: "Which element is essential for nitrogen fixation?",
-    options: ["Boron", "Molybdenum", "Calcium", "Potassium"],
-    answer: 1
-  },
-  {
-    question: "The mode of nutrition in green plants is:",
-    options: ["Heterotrophic", "Saprophytic", "Autotrophic", "Parasitic"],
-    answer: 2
-  },
-  {
-    question: "Which process converts light energy into chemical energy?",
-    options: ["Respiration", "Photosynthesis", "Transpiration", "Fermentation"],
-    answer: 1
-  },
-  {
-    question: "In which cell organelle does photosynthesis occur?",
-    options: ["Mitochondria", "Chloroplast", "Ribosome", "Nucleus"],
-    answer: 1
-  },
-  {
-    question: "The first step of photosynthesis is:",
-    options: ["Photolysis of water", "CO2 fixation", "Glucose synthesis", "ATP formation"],
-    answer: 0
-  },
-  {
-    question: "The C3 cycle is also called:",
-    options: ["Calvin cycle", "Krebs cycle", "Hatch-Slack pathway", "Glycolysis"],
-    answer: 0
-  },
-  {
-    question: "The largest flower in the world is:",
-    options: ["Rafflesia", "Lotus", "Sunflower", "Hibiscus"],
-    answer: 0
-  },
-  {
-    question: "The largest seed in the world is:",
-    options: ["Coconut", "Lodoicea", "Mango", "Pea"],
-    answer: 1
-  },
-  {
-    question: "Which type of pollination is seen in maize?",
-    options: ["Entomophily", "Anemophily", "Hydrophily", "Ornithophily"],
-    answer: 1
-  },
-  {
-    question: "Which is an example of insectivorous plant?",
-    options: ["Cactus", "Mango", "Nepenthes", "Rice"],
-    answer: 2
-  },
-  {
-    question: "The functional unit of chloroplast is:",
-    options: ["Cristae", "Granum", "Thylakoid", "Stroma"],
-    answer: 2
-  },
-  {
-    question: "In glycolysis, glucose is converted into:",
-    options: ["Pyruvate", "Acetyl-CoA", "Lactic acid", "Alcohol"],
-    answer: 0
-  },
-  {
-    question: "Which gas is essential for photosynthesis?",
-    options: ["Oxygen", "Carbon dioxide", "Nitrogen", "Hydrogen"],
-    answer: 1
-  },
-  {
-    question: "Which process forms ATP in plants?",
-    options: ["Respiration", "Photosynthesis", "Both respiration and photosynthesis", "Fermentation"],
-    answer: 2
-  },
-  {
-    question: "The edible part of apple is:",
-    options: ["Ovary", "Thalamus", "Seed", "Pericarp"],
-    answer: 1
-  },
-  {
-    question: "The edible part of banana is:",
-    options: ["Pericarp", "Mesocarp", "Endosperm", "Fruit wall"],
-    answer: 0
-  },
-  {
-    question: "The perisperm is found in:",
-    options: ["Maize", "Castor", "Black pepper", "Wheat"],
-    answer: 2
-  },
-  {
-    question: "Which of the following is an example of endospermic seed?",
-    options: ["Pea", "Bean", "Maize", "Gram"],
-    answer: 2
-  },
-  {
-    question: "Which is an example of non-endospermic seed?",
-    options: ["Maize", "Castor", "Pea", "Coconut"],
-    answer: 2
-  },
-  {
-    question: "Which type of germination occurs in pea?",
-    options: ["Epigeal", "Hypogeal", "Vivipary", "Asexual"],
-    answer: 1
-  },
-  {
-    question: "Which type of germination occurs in bean?",
-    options: ["Epigeal", "Hypogeal", "Vivipary", "Clonal"],
-    answer: 0
-  },
-  {
-    question: "Which plant tissue is dead at maturity?",
-    options: ["Parenchyma", "Collenchyma", "Sclerenchyma", "Phloem"],
-    answer: 2
-  },
-  {
-    question: "The universal solvent in plants is:",
-    options: ["Alcohol", "Water", "Oil", "Glucose"],
-    answer: 1
-  },
-  {
-    question: "The middle lamella is rich in:",
-    options: ["Cellulose", "Lignin", "Pectin", "Protein"],
-    answer: 2
-  },
-  {
-    question: "Which plastid stores starch?",
-    options: ["Chloroplast", "Chromoplast", "Amyloplast", "Elaioplast"],
-    answer: 2
-  },
-  {
-    question: "Which plastid stores oil?",
-    options: ["Chloroplast", "Elaioplast", "Amyloplast", "Chromoplast"],
-    answer: 1
-  },
-  {
-    question: "Which plastid imparts color to fruits?",
-    options: ["Chloroplast", "Chromoplast", "Amyloplast", "Elaioplast"],
-    answer: 1
-  },
-  {
-    question: "Which bond is broken in photolysis of water?",
-    options: ["Hydrogen bond", "Covalent bond", "Peptide bond", "Ionic bond"],
-    answer: 1
-  },
-  {
-    question: "In which phase of mitosis do chromosomes align at equator?",
-    options: ["Prophase", "Metaphase", "Anaphase", "Telophase"],
-    answer: 1
-  },
-  {
-    question: "In meiosis, crossing over occurs in:",
-    options: ["Prophase I", "Metaphase I", "Anaphase I", "Telophase I"],
-    answer: 0
-  },
-  {
-    question: "The study of pollen grains is called:",
-    options: ["Palynology", "Mycology", "Bryology", "Cytology"],
-    answer: 0
-  },
-  {
-    question: "The swollen base of the pistil is called:",
-    options: ["Stigma", "Style", "Ovary", "Ovule"],
-    answer: 2
-  },
-  {
-    question: "Ovules are attached to ovary wall by:",
-    options: ["Funiculus", "Nucellus", "Integument", "Embryo sac"],
-    answer: 0
-  },
-  {
-    question: "Embryo sac in angiosperms is:",
-    options: ["1-celled", "4-celled", "7-celled, 8-nucleate", "8-celled, 7-nucleate"],
-    answer: 2
-  },
-  {
-    question: "The male gametophyte in angiosperms is:",
-    options: ["Anther", "Pollen grain", "Sperm", "Ovule"],
-    answer: 1
-  },
-  {
-    question: "The female gametophyte in angiosperms is:",
-    options: ["Embryo sac", "Ovule", "Ovary", "Stigma"],
-    answer: 0
-  },
-  {
-    question: "In which group of plants is archegonium found?",
-    options: ["Bryophytes and Pteridophytes", "Gymnosperms", "Both A and B", "Angiosperms"],
-    answer: 2
-  },
-  {
-    question: "The reserve food in monocot seeds is stored in:",
-    options: ["Endosperm", "Cotyledon", "Scutellum", "Aleurone layer"],
-    answer: 0
-  },
-  {
-    question: "The study of algae is called:",
-    options: ["Mycology", "Phycology", "Bryology", "Pteridology"],
-    answer: 1
-  },
+    // Initial tasks provided from user's list
+    const defaultTasks = [
+      {title: "Derivatives, Integration & call 11 chapters", note: "Study calculus: derivatives & integrals, finish call 11 chapters", minutes: 90, priority: 'high'},
+      {title: "Aldehydes & ketone", note: "Organic chemistry: reactions + mechanisms", minutes: 60, priority: 'normal'},
+      {title: "RD SHM OPTICS", note: "Revision: RD, SHM, Optics — practice problems", minutes: 80, priority: 'high'}
     ];
 
-    let currentQuestion = 0;
-    let score = 0;
-    let wrong = 0;
-    let quizEnded = false;
+    const STORAGE_KEY = 'todo-with-timers-v1';
+    const tasksEl = document.getElementById('tasks');
+    const dateBadge = document.getElementById('dateBadge');
+    const sessionTotalEl = document.getElementById('sessionTotal');
 
-    // load a question
-    function loadQuestion() {
-      const q = quizData[currentQuestion];
-      document.getElementById("question").innerText = q.question;
-      q.options.forEach((opt, index) => {
-        document.getElementById("opt" + index).innerText = opt;
-      });
-      document.querySelectorAll('input[name="option"]').forEach(r => {
-        r.checked = false;
-        r.disabled = false; // enable for new question
-      });
-      document.getElementById("feedback").innerText = "";
+    // show date
+    const now = new Date();
+    dateBadge.textContent = now.toLocaleString(undefined, {weekday:'short', month:'short', day:'numeric'});
+
+    // load tasks
+    function load(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return defaultTasks.map(t=>createTaskObject(t));
+      try{const parsed = JSON.parse(raw); return parsed.map(t=>createTaskObject(t));}catch(e){return defaultTasks.map(t=>createTaskObject(t));}
     }
 
-    // move to next
-    function nextQuestion() {
-      if (quizEnded) return;
+    function save(tasks){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks.map(stripRuntime)));
+    }
 
-      const selected = document.querySelector('input[name="option"]:checked');
-      if (selected) {
-        const ans = parseInt(selected.value);
-        const correct = quizData[currentQuestion].answer;
-        if (ans === correct) {
-          score++;
-          document.getElementById("feedback").innerText = "✅ Correct!";
-        } else {
-          wrong++;
-          document.getElementById("feedback").innerText =
-            `❌ Wrong! Correct answer: ${quizData[currentQuestion].options[correct]}`;
-        }
+    function createTaskObject(data){
+      return Object.assign({
+        id: 't'+Math.random().toString(36).slice(2,9),
+        title:'',note:'',minutes:25,remaining:0, running:false, completed:false, priority:'normal',startedAt:null
+      }, data, {remaining: (data.remaining ?? (data.minutes*60)), startedAt: data.startedAt ?? null});
+    }
 
-        // disable options after answering
-        document.querySelectorAll('input[name="option"]').forEach(r => r.disabled = true);
+    function stripRuntime(t){
+      return {id:t.id,title:t.title,note:t.note,minutes:t.minutes,remaining:t.remaining,completed:t.completed,priority:t.priority,startedAt:t.startedAt};
+    }
 
-        setTimeout(() => {
-          currentQuestion++;
-          if (currentQuestion < quizData.length) {
-            loadQuestion();
-          } else {
-            endQuiz();
-          }
-        }, 1000); // wait 1 second to show feedback
-      } else {
-        alert("Please select an option before proceeding.");
+    let tasks = load();
+    if(tasks.length===0){ tasks = defaultTasks.map(t=>createTaskObject(t)); }
+
+    // Render
+    function render(){
+      tasksEl.innerHTML = '';
+      tasks.forEach(t => tasksEl.appendChild(renderTask(t)));
+      save(tasks);
+      updateSessionTotal();
+    }
+
+    function renderTask(t){
+      const wrap = document.createElement('div'); wrap.className='task';
+
+      const meta = document.createElement('div'); meta.className='meta';
+      const h = document.createElement('h3'); h.textContent = t.title;
+      const p = document.createElement('p'); p.textContent = t.note || (t.minutes + ' min');
+      meta.appendChild(h); meta.appendChild(p);
+
+      const controls = document.createElement('div'); controls.className='controls';
+      const time = document.createElement('div'); time.className='time'; time.id = 'time-'+t.id; time.textContent = formatSec(t.remaining);
+
+      const start = document.createElement('button'); start.textContent = t.running ? 'Pause' : 'Start'; start.onclick = ()=>toggleStart(t.id);
+      if(t.running) start.classList.add('primary');
+      const reset = document.createElement('button'); reset.textContent = 'Reset'; reset.onclick = ()=>resetTask(t.id);
+      const done = document.createElement('button'); done.textContent = t.completed ? 'Undo' : 'Done'; done.onclick = ()=>toggleDone(t.id);
+
+      controls.appendChild(time); controls.appendChild(start); controls.appendChild(reset); controls.appendChild(done);
+
+      wrap.appendChild(meta); wrap.appendChild(controls);
+
+      if(t.priority === 'high'){
+        const b = document.createElement('div'); b.style.marginLeft='8px'; b.innerHTML = '<span class="badge">High</span>';
+        wrap.insertBefore(b,controls);
       }
+
+      if(t.completed){ wrap.style.opacity = '0.5'; wrap.style.textDecoration = 'line-through'; }
+      return wrap;
     }
 
-    // end quiz function
-    function endQuiz() {
-      quizEnded = true;
-      let finalScore = score - (wrong * 0.25);
-      if (finalScore < 0) finalScore = 0;
+    // helpers
+    function formatSec(s){ if(s==null) s=0; s = Math.max(0,Math.floor(s)); const h = Math.floor(s/3600); const m = Math.floor((s%3600)/60); const sec = s%60; return (h?String(h).padStart(2,'0')+':':'') + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0'); }
 
-      document.querySelector(".quiz-container").innerHTML =
-        `<h2>⏰ Quiz Completed!</h2>
-         <p>✅ Correct: ${score}</p>
-         <p>❌ Wrong: ${wrong}</p>
-         <p><b>Total Marks: ${finalScore.toFixed(2)} / ${quizData.length}</b></p>`;
-    }
+    function findTask(id){ return tasks.find(x=>x.id===id); }
 
-    // Timer (1 hour = 3600s)
-    let timeLeft = 3600;
-    const timerDisplay = document.getElementById("timer");
+    // timer controls
+    let ticker = null;
+    function startTicker(){ if(ticker) return; ticker = setInterval(tick,1000); }
+    function stopTicker(){ if(ticker){ clearInterval(ticker); ticker = null; } }
 
-    function startTimer() {
-      const timerInterval = setInterval(() => {
-        if (timeLeft <= 0 || quizEnded) {
-          clearInterval(timerInterval);
-          endQuiz();
-        } else {
-          timeLeft--;
-          const minutes = Math.floor(timeLeft / 60);
-          const seconds = timeLeft % 60;
-          timerDisplay.innerText = 
-            `Time Left: ${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+    function tick(){
+      let anyRunning = false;
+      for(const t of tasks){ if(t.running && !t.completed){ anyRunning = true; t.remaining = Math.max(0, (t.remaining - 1)); if(t.remaining===0){ t.running=false; // finished
+            // small browser notification
+            if(Notification && Notification.permission==='granted'){
+              new Notification('Timer finished', {body: t.title});
+            }
+          }
         }
-      }, 1000);
+      }
+      // update DOM times
+      tasks.forEach(t => { const el=document.getElementById('time-'+t.id); if(el) el.textContent = formatSec(t.remaining); });
+      if(!anyRunning) stopTicker();
+      save(tasks);
+      updateSessionTotal();
     }
 
-    // init
-    loadQuestion();
-    startTimer();
-  </script>
+    function toggleStart(id){ const t = findTask(id); if(!t) return; if(t.completed) return; t.running = !t.running; if(t.running && t.remaining<=0) t.remaining = t.minutes*60; if(t.running) t.startedAt = Date.now(); render(); startTicker(); }
+    function resetTask(id){ const t = findTask(id); if(!t) return; t.running=false; t.remaining = t.minutes*60; t.completed=false; render(); }
+    function toggleDone(id){ const t = findTask(id); if(!t) return; t.completed = !t.completed; t.running = false; render(); }
 
+    // Add tasks
+    document.getElementById('addBtn').addEventListener('click', ()=>{
+      const title = document.getElementById('taskTitle').value.trim(); if(!title) return alert('Enter a title');
+      const note = document.getElementById('taskNote').value.trim(); const minutes = parseInt(document.getElementById('taskMinutes').value) || 25; const priority = document.getElementById('taskPriority').value;
+      const t = createTaskObject({title,note,minutes,remaining:minutes*60,priority}); tasks.push(t); render(); document.getElementById('addForm').reset();
+    });
+
+    document.getElementById('addStartBtn').addEventListener('click', ()=>{
+      const title = document.getElementById('taskTitle').value.trim(); if(!title) return alert('Enter a title');
+      const note = document.getElementById('taskNote').value.trim(); const minutes = parseInt(document.getElementById('taskMinutes').value) || 25; const priority = document.getElementById('taskPriority').value;
+      const t = createTaskObject({title,note,minutes,remaining:minutes*60,priority, running:true}); tasks.push(t); render(); startTicker(); document.getElementById('addForm').reset();
+    });
+
+    // preset clicks
+    document.querySelectorAll('.preset').forEach(p=>p.addEventListener('click', e=>{
+      const m = parseInt(e.currentTarget.dataset.min); document.getElementById('taskMinutes').value = m;
+    }));
+
+    document.getElementById('clearAll').addEventListener('click', ()=>{
+      tasks = tasks.filter(t=>!t.completed);
+      render();
+    });
+
+    // session total (sum of remaining of non-completed)
+    function updateSessionTotal(){ const total = tasks.reduce((s,t)=> t.completed? s: s + (t.remaining||0),0); sessionTotalEl.textContent = formatSec(total); }
+
+    // request Notification permission once
+    if('Notification' in window && Notification.permission !== 'granted'){
+      try{ Notification.requestPermission().then(()=>{}); }catch(e){}
+    }
+
+    // initialize
+    render();
+    // start any running timers on load
+    if(tasks.some(t=>t.running)) startTicker();
+
+    // expose utilities for console / debugging
+    window._TODOS = {tasks,save,render};
+  </script>
 </body>
 </html>
